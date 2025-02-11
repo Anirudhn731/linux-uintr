@@ -539,30 +539,36 @@ static inline void fred_install_sysvec(unsigned int vector,
  * point is to mask off the bits above bit 7 because the push is sign
  * extending.
  */
-.align IDT_ALIGN SYM_CODE_START(irq_entries_start)
-	vector = FIRST_EXTERNAL_VECTOR
-			 .rept NR_EXTERNAL_VECTORS UNWIND_HINT_IRET_REGS 0
-	: ENDBR.byte 0x6a,
-	vector jmp asm_common_interrupt
-			/* Ensure that the above is IDT_ALIGN bytes max */
-			.fill 0b +
-		IDT_ALIGN -.,
-	1,
-	0xcc vector = vector + 1.endr SYM_CODE_END(irq_entries_start)
+	.align IDT_ALIGN
+SYM_CODE_START(irq_entries_start)
+    vector=FIRST_EXTERNAL_VECTOR
+    .rept NR_EXTERNAL_VECTORS
+	UNWIND_HINT_IRET_REGS
+0 :
+	ENDBR
+	.byte	0x6a, vector
+	jmp	asm_common_interrupt
+	/* Ensure that the above is IDT_ALIGN bytes max */
+	.fill 0b + IDT_ALIGN - ., 1, 0xcc
+	vector = vector+1
+    .endr
+SYM_CODE_END(irq_entries_start)
 
 #ifdef CONFIG_X86_LOCAL_APIC
-				       .align IDT_ALIGN
-			       SYM_CODE_START(spurious_entries_start) vector =
-			      FIRST_SYSTEM_VECTOR
-				      .rept NR_SYSTEM_VECTORS
-			      UNWIND_HINT_IRET_REGS 0 : ENDBR.byte 0x6a,
-	vector jmp asm_spurious_interrupt
-			/* Ensure that the above is IDT_ALIGN bytes max */
-			.fill 0b +
-		IDT_ALIGN -.,
-	1,
-	0xcc vector = vector +
-		      1.endr SYM_CODE_END(spurious_entries_start)
+	.align IDT_ALIGN
+SYM_CODE_START(spurious_entries_start)
+    vector=FIRST_SYSTEM_VECTOR
+    .rept NR_SYSTEM_VECTORS
+	UNWIND_HINT_IRET_REGS
+0 :
+	ENDBR
+	.byte	0x6a, vector
+	jmp	asm_spurious_interrupt
+	/* Ensure that the above is IDT_ALIGN bytes max */
+	.fill 0b + IDT_ALIGN - ., 1, 0xcc
+	vector = vector+1
+    .endr
+SYM_CODE_END(spurious_entries_start)
 #endif
 
 #endif /* __ASSEMBLY__ */

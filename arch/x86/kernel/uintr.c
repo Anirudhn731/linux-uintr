@@ -27,6 +27,10 @@
 
 #include <uapi/asm/uintr.h>
 
+//
+#include <asm/fpu/xstate.h>
+//
+
 #define OS_ABI_REDZONE 128
 
 struct uvecfd_ctx {

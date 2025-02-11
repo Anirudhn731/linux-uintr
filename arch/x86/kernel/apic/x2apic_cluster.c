@@ -267,7 +267,7 @@ static struct apic apic_x2apic_cluster __ro_after_init = {
 	/* Check: If phys mode can be used even if apic is in flat mode? */
 	.send_UINTR = x2apic_send_UINTR,
 
-	.inquire_remote_apic = NULL,
+	//.inquire_remote_apic = NULL,
 
 	.read = native_apic_msr_read,
 	.write = native_apic_msr_write,

@@ -94,7 +94,7 @@ static struct apic apic_flat __ro_after_init = {
 	/* Check: If phys mode can be used even if apic is in flat mode? */
 	.send_UINTR = default_send_UINTR_single_phys,
 
-	.inquire_remote_apic = default_inquire_remote_apic,
+	//.inquire_remote_apic = default_inquire_remote_apic,
 
 	.read = native_apic_mem_read,
 	.write = native_apic_mem_write,
@@ -167,7 +167,7 @@ static struct apic apic_physflat __ro_after_init = {
 
 	.send_UINTR = default_send_UINTR_single_phys,
 
-	.inquire_remote_apic = default_inquire_remote_apic,
+	//.inquire_remote_apic = default_inquire_remote_apic,
 
 	.read = native_apic_mem_read,
 	.write = native_apic_mem_write,

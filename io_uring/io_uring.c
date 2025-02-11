@@ -2595,65 +2595,66 @@ static unsigned long rings_size(struct io_ring_ctx *ctx,
 	return off;
 }
 
-static int io_eventfd_register(struct io_ring_ctx *ctx, void __user *arg,
-			       unsigned int eventfd_async)
-{
-	struct io_ev_fd *ev_fd;
-	__s32 __user *fds = arg;
-	int fd;
+//static int io_eventfd_register(struct io_ring_ctx *ctx, void __user *arg,
+//			       unsigned int eventfd_async)
+//{
+//	struct io_ev_fd *ev_fd;
+//	__s32 __user *fds = arg;
+//	int fd;
 
-	ev_fd = rcu_dereference_protected(ctx->io_ev_fd,
-					  lockdep_is_held(&ctx->uring_lock));
-	if (ev_fd)
-		return -EBUSY;
+//	ev_fd = rcu_dereference_protected(ctx->io_ev_fd,
+//					  lockdep_is_held(&ctx->uring_lock));
+//	if (ev_fd)
+//		return -EBUSY;
 
-	if (copy_from_user(&fd, fds, sizeof(*fds)))
-		return -EFAULT;
+//	if (copy_from_user(&fd, fds, sizeof(*fds)))
+//		return -EFAULT;
 
-	ev_fd = kmalloc(sizeof(*ev_fd), GFP_KERNEL);
-	if (!ev_fd)
-		return -ENOMEM;
+//	ev_fd = kmalloc(sizeof(*ev_fd), GFP_KERNEL);
+//	if (!ev_fd)
+//		return -ENOMEM;
 
-	ev_fd->cq_ev_fd = eventfd_ctx_fdget(fd);
-	if (IS_ERR(ev_fd->cq_ev_fd)) {
-		int ret = PTR_ERR(ev_fd->cq_ev_fd);
-		kfree(ev_fd);
-		return ret;
-	}
+//	ev_fd->cq_ev_fd = eventfd_ctx_fdget(fd);
+//	if (IS_ERR(ev_fd->cq_ev_fd)) {
+//		int ret = PTR_ERR(ev_fd->cq_ev_fd);
+//		kfree(ev_fd);
+//		return ret;
+//	}
 
-	spin_lock(&ctx->completion_lock);
-	ctx->evfd_last_cq_tail = ctx->cached_cq_tail;
-	spin_unlock(&ctx->completion_lock);
+//	spin_lock(&ctx->completion_lock);
+//	ctx->evfd_last_cq_tail = ctx->cached_cq_tail;
+//	spin_unlock(&ctx->completion_lock);
 
-	ev_fd->eventfd_async = eventfd_async;
-	ctx->has_evfd = true;
-	rcu_assign_pointer(ctx->io_ev_fd, ev_fd);
-	return 0;
-}
+//	ev_fd->eventfd_async = eventfd_async;
+//	ctx->has_evfd = true;
+//	rcu_assign_pointer(ctx->io_ev_fd, ev_fd);
+//	return 0;
+//}
 
-static void io_eventfd_put(struct rcu_head *rcu)
-{
-	struct io_ev_fd *ev_fd = container_of(rcu, struct io_ev_fd, rcu);
+//static void io_eventfd_put(struct rcu_head *rcu)
+//{
+//	struct io_ev_fd *ev_fd = container_of(rcu, struct io_ev_fd, rcu);
 
-	eventfd_ctx_put(ev_fd->cq_ev_fd);
-	kfree(ev_fd);
-}
+//	eventfd_ctx_put(ev_fd->cq_ev_fd);
+//	kfree(ev_fd);
+//}
 
-static int io_eventfd_unregister(struct io_ring_ctx *ctx)
-{
-	struct io_ev_fd *ev_fd;
+//static int io_eventfd_unregister(struct io_ring_ctx *ctx)
+//int io_eventfd_unregister(struct io_ring_ctx *ctx)
+//{
+//	struct io_ev_fd *ev_fd;
 
-	ev_fd = rcu_dereference_protected(ctx->io_ev_fd,
-					  lockdep_is_held(&ctx->uring_lock));
-	if (ev_fd) {
-		ctx->has_evfd = false;
-		rcu_assign_pointer(ctx->io_ev_fd, NULL);
-		call_rcu(&ev_fd->rcu, io_eventfd_put);
-		return 0;
-	}
+//	ev_fd = rcu_dereference_protected(ctx->io_ev_fd,
+//					  lockdep_is_held(&ctx->uring_lock));
+//	if (ev_fd) {
+//		ctx->has_evfd = false;
+//		rcu_assign_pointer(ctx->io_ev_fd, NULL);
+//		call_rcu(&ev_fd->rcu, io_eventfd_put);
+//		return 0;
+//	}
 
-	return -ENXIO;
-}
+//	return -ENXIO;
+//}
 
 #ifdef CONFIG_X86_USER_INTERRUPTS
 static int io_uintr_register(struct io_ring_ctx *ctx, void __user *arg)
@@ -2731,7 +2732,8 @@ static __cold void io_ring_ctx_free(struct io_ring_ctx *ctx)
 	io_cqring_overflow_kill(ctx);
 	io_eventfd_unregister(ctx);
 	io_uintr_unregister(ctx);
-	io_alloc_cache_free(&ctx->apoll_cache, io_apoll_cache_free);
+	//io_alloc_cache_free(&ctx->apoll_cache, io_apoll_cache_free);
+	io_alloc_cache_free(&ctx->apoll_cache, kfree);
 	io_alloc_cache_free(&ctx->netmsg_cache, io_netmsg_cache_free);
 	io_alloc_cache_free(&ctx->rw_cache, io_rw_cache_free);
 	io_alloc_cache_free(&ctx->uring_cache, kfree);
@@ -3800,7 +3802,8 @@ static __cold int io_probe(struct io_ring_ctx *ctx, void __user *arg,
 
 	for (i = 0; i < nr_args; i++) {
 		p->ops[i].op = i;
-		if (!io_op_defs[i].not_supported)
+		//if (!io_op_defs[i].not_supported)
+		if (io_uring_op_supported(i))	
 			p->ops[i].flags = IO_URING_OP_SUPPORTED;
 	}
 	p->ops_len = i;
@@ -3830,6 +3833,8 @@ static int io_register_personality(struct io_ring_ctx *ctx)
 	}
 	return id;
 }
+
+#define IORING_MAX_RESTRICTIONS	(IORING_RESTRICTION_LAST + IORING_REGISTER_LAST + IORING_OP_LAST)
 
 static __cold int io_register_restrictions(struct io_ring_ctx *ctx,
 					   void __user *arg,
@@ -3949,7 +3954,8 @@ static __cold int io_register_iowq_aff(struct io_ring_ctx *ctx,
 		return -EFAULT;
 	}
 
-	ret = io_wq_cpu_affinity(tctx->io_wq, new_mask);
+	//ret = io_wq_cpu_affinity(tctx->io_wq, new_mask);
+	ret = io_wq_cpu_affinity(tctx, new_mask);
 	free_cpumask_var(new_mask);
 	return ret;
 }
@@ -3961,7 +3967,8 @@ static __cold int io_unregister_iowq_aff(struct io_ring_ctx *ctx)
 	if (!tctx || !tctx->io_wq)
 		return -EINVAL;
 
-	return io_wq_cpu_affinity(tctx->io_wq, NULL);
+	//return io_wq_cpu_affinity(tctx->io_wq, NULL);
+	return io_wq_cpu_affinity(tctx, NULL);
 }
 
 static __cold int io_register_iowq_max_workers(struct io_ring_ctx *ctx,
@@ -4223,34 +4230,34 @@ static int __io_uring_register(struct io_ring_ctx *ctx, unsigned opcode,
 	return ret;
 }
 
-SYSCALL_DEFINE4(io_uring_register, unsigned int, fd, unsigned int, opcode,
-		void __user *, arg, unsigned int, nr_args)
-{
-	struct io_ring_ctx *ctx;
-	long ret = -EBADF;
-	struct fd f;
+//SYSCALL_DEFINE4(io_uring_register, unsigned int, fd, unsigned int, opcode,
+//		void __user *, arg, unsigned int, nr_args)
+//{
+//	struct io_ring_ctx *ctx;
+//	long ret = -EBADF;
+//	struct fd f;
 
-	f = fdget(fd);
-	if (!f.file)
-		return -EBADF;
+//	f = fdget(fd);
+//	if (!f.file)
+//		return -EBADF;
 
-	ret = -EOPNOTSUPP;
-	if (!io_is_uring_fops(f.file))
-		goto out_fput;
+//	ret = -EOPNOTSUPP;
+//	if (!io_is_uring_fops(f.file))
+//		goto out_fput;
 
-	ctx = f.file->private_data;
+//	ctx = f.file->private_data;
 
-	io_run_task_work();
+//	io_run_task_work();
 
-	mutex_lock(&ctx->uring_lock);
-	ret = __io_uring_register(ctx, opcode, arg, nr_args);
-	mutex_unlock(&ctx->uring_lock);
-	trace_io_uring_register(ctx, opcode, ctx->nr_user_files,
-				ctx->nr_user_bufs, ret);
-out_fput:
-	fdput(f);
-	return ret;
-}
+//	mutex_lock(&ctx->uring_lock);
+//	ret = __io_uring_register(ctx, opcode, arg, nr_args);
+//	mutex_unlock(&ctx->uring_lock);
+//	trace_io_uring_register(ctx, opcode, ctx->nr_user_files,
+//				ctx->nr_user_bufs, ret);
+//out_fput:
+//	fdput(f);
+//	return ret;
+//}
 
 static int __init io_uring_init(void)
 {

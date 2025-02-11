@@ -48,6 +48,13 @@
 #define XFEATURE_MASK_SUPERVISOR_SUPPORTED \
 	(XFEATURE_MASK_PASID | XFEATURE_MASK_CET_USER | XFEATURE_MASK_UINTR)
 
+//
+void *start_update_xsave_msrs(int xfeature_nr);
+void end_update_xsave_msrs(void);
+int xsave_wrmsrl(void *xstate, u32 msr, u64 val);
+int xsave_rdmsrl(void *xstate, unsigned int msr, unsigned long long *p);
+//
+
 /*
  * A supervisor state component may not always contain valuable information,
  * and its size may be huge. Saving/restoring such supervisor state components

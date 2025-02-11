@@ -85,7 +85,7 @@ static struct apic apic_bigsmp __ro_after_init = {
 
 	.send_UINTR = NULL,
 
-	.inquire_remote_apic = default_inquire_remote_apic,
+	//.inquire_remote_apic = default_inquire_remote_apic,
 
 	.read = native_apic_mem_read,
 	.write = native_apic_mem_write,

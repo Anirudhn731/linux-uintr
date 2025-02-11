@@ -232,9 +232,10 @@ static inline void uitt_dup_context(struct mm_struct *oldmm,
 static inline int arch_dup_mmap(struct mm_struct *oldmm, struct mm_struct *mm)
 {
 	arch_dup_pkeys(oldmm, mm);
-	paravirt_arch_dup_mmap(oldmm, mm);
+	//paravirt_arch_dup_mmap(oldmm, mm);
+	paravirt_enter_mmap(mm);
 	dup_lam(oldmm, mm);
-	uitt_dup_context(oldmm, mm);
+	//uitt_dup_context(oldmm, mm);
 	return ldt_dup_context(oldmm, mm);
 }
 

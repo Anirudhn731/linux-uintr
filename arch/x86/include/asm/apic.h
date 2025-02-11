@@ -329,8 +329,9 @@ struct apic {
 	/* User Interrupt specific function */
 	/* Check: Is ndst the right name? */
 
-	enum apic_delivery_modes delivery_mode;
-	bool dest_mode_logical;
+	//enum apic_delivery_modes delivery_mode;
+	//bool dest_mode_logical;
+	u32 delivery_mode;
 
 	u32 (*calc_dest_apicid)(unsigned int cpu);
 
